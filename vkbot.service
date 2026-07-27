@@ -1,0 +1,13 @@
+[Unit]
+Description=VK Sports AI Bot
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/var/www/vkbot-chekmenevanatolii
+Environment="PATH=/var/www/vkbot-chekmenevanatolii/.venv/bin"
+ExecStart=/var/www/vkbot-chekmenevanatolii/.venv/bin/python -m app.main
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

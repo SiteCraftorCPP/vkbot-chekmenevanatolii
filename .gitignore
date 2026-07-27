@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+.idea/
+.vscode/
+vk_sport_ai_bot.egg-info/
+test.db
+get_id.py
+test_ocr.py
