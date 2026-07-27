@@ -7,24 +7,25 @@ VK-бот принимает подтверждение регистрации, 
 ## Возможности
 
 - роли пользователя и нескольких администраторов;
-- редактирование текста, фото и ссылки стартового оффера командой `/admin`;
+- редактирование текста, фото и ссылки стартового оффера через админ-панель;
+- раздел заявок с пролистыванием и модерацией;
 - конкурентно-безопасное подтверждение заявки кнопками;
-- хранение всех пользователей, заявок и прогнозов в PostgreSQL;
+- хранение всех пользователей, заявок и прогнозов в базе;
 - рассылка текста и вложений всем пользователям;
 - локальное OCR без передачи скриншота стороннему vision API;
-- один наиболее обоснованный прогноз либо отказ при нехватке данных.
+- прогноз с конкретной ставкой и процентной вероятностью захода.
 
-## Запуск
+## Локальный запуск (Windows)
 
-1. Создайте сообщество VK и включите `Сообщения` и `Возможности ботов`.
-2. В управлении API создайте ключ сообщества с правом доступа к сообщениям.
-3. Скопируйте `.env.example` в `.env` и заполните значения:
-   - `VK_BOT_TOKEN` — ключ сообщества;
-   - `VK_GROUP_ID` — ID сообщества без минуса;
-   - `ADMIN_IDS` — VK ID администраторов через запятую;
-   - `DEEPSEEK_API_KEY` — API-ключ DeepSeek;
-   - одинаковый пароль у `POSTGRES_PASSWORD` и внутри `DATABASE_URL`.
-4. Запустите:
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -e .
+Copy-Item .env.example .env
+# заполнить .env
+.venv\Scripts\python.exe -m app.main
+```
+
+## Запуск через Docker
 
 ```powershell
 Copy-Item .env.example .env
@@ -32,15 +33,48 @@ docker compose up --build -d
 docker compose logs -f bot
 ```
 
-Бот работает через Long Poll, поэтому домен, HTTPS и Callback API не нужны.
-Первый анализ дольше обычного: PaddleOCR скачивает модели в Docker volume.
+## Запуск на VPS через systemd
+
+Каталог проекта:
+
+```bash
+cd /var/www/vkbot-chekmenevanatolii
+```
+
+Установка:
+
+```bash
+apt-get update
+apt-get install -y python3.11 python3.11-venv git libgomp1 libgl1 libglib2.0-0
+
+mkdir -p /var/www/vkbot-chekmenevanatolii/data
+cd /var/www/vkbot-chekmenevanatolii
+
+git clone https://github.com/SiteCraftorCPP/vkbot-chekmenevanatolii.git .
+python3.11 -m venv .venv
+.venv/bin/pip install -e .
+
+cp .env.example .env
+# заполнить .env
+
+cp vkbot.service /etc/systemd/system/vkbot.service
+systemctl daemon-reload
+systemctl enable vkbot
+systemctl start vkbot
+systemctl status vkbot
+```
+
+Логи:
+
+```bash
+journalctl -u vkbot -f
+```
 
 ## Использование
 
 - `/start` — стартовый экран или главное меню;
-- `/admin` — настройка оффера и рассылка;
+- кнопка «Админ-панель ⚙️» — настройки оффера, заявки и рассылка (только для админов);
 - незарегистрированный пользователь отправляет фото подтверждения;
 - одобренный пользователь отправляет фото события.
 
-Бот автоматически создаёт таблицы при старте. Перед production-релизом для
-изменений схемы следует добавить Alembic.
+Бот автоматически создаёт таблицы при старте.

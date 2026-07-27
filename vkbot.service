@@ -1,13 +1,19 @@
 [Unit]
 Description=VK Sports AI Bot
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
+Type=simple
 User=root
 WorkingDirectory=/var/www/vkbot-chekmenevanatolii
-Environment="PATH=/var/www/vkbot-chekmenevanatolii/.venv/bin"
+EnvironmentFile=/var/www/vkbot-chekmenevanatolii/.env
 ExecStart=/var/www/vkbot-chekmenevanatolii/.venv/bin/python -m app.main
 Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vkbot
 
 [Install]
 WantedBy=multi-user.target
