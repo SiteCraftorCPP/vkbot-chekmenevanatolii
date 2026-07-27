@@ -215,14 +215,17 @@ async def receive_registration(message: Message, attachment: str) -> None:
 
 async def process_forecast(message: Message, url: str, attachment: str) -> None:
     await set_state(message.from_id, None)
-    await message.answer("🤖 Читаю скриншот и анализирую событие... Это займёт около минуты ⏳")
+    await message.answer(
+        "🤖 Сканирую скрин, собираю статистику и формирую прогноз... "
+        "Обычно это занимает до минуты ⏳"
+    )
     recognized = ""
     answer: str | None = None
     error_text: str | None = None
     try:
         recognized = await recognize_screenshot(url)
         answer = await make_forecast(recognized)
-        await message.answer(f"🎯 Прогноз готов:\n\n{answer}", keyboard=forecast_keyboard(is_admin(message.from_id)))
+        await message.answer(f"🎯 Прогноз готов!\n\n{answer}", keyboard=forecast_keyboard(is_admin(message.from_id)))
     except RecognitionError as error:
         error_text = str(error)
         await message.answer(f"❌ {error_text}", keyboard=forecast_keyboard(is_admin(message.from_id)))
