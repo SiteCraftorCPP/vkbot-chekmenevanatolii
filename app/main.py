@@ -103,12 +103,17 @@ def get_attachments(message: Message) -> str:
     return ",".join(tokens)
 
 
+async def build_forecast_keyboard(user_id: int) -> str:
+    offer_link = await get_setting("offer_link")
+    return forecast_keyboard(offer_link, is_admin(user_id))
+
+
 async def show_entrypoint(message: Message) -> None:
     user = await touch_user(message.from_id)
     if user.access_status == AccessStatus.APPROVED:
         await message.answer(
             "✅ Доступ подтверждён!\n\nНажмите кнопку ниже и пришлите скриншот спортивного события, чтобы нейросеть выдала прогноз 🤖",
-            keyboard=forecast_keyboard(is_admin(message.from_id)),
+            keyboard=await build_forecast_keyboard(message.from_id),
         )
         return
     if user.access_status == AccessStatus.PENDING:
@@ -184,7 +189,7 @@ async def receive_registration(message: Message, attachment: str) -> None:
             session.add(user)
             await session.flush()
         if user.access_status == AccessStatus.APPROVED:
-            await message.answer("✅ Ваш доступ уже подтверждён!", keyboard=forecast_keyboard(is_admin(message.from_id)))
+            await message.answer("✅ Ваш доступ уже подтверждён!", keyboard=await build_forecast_keyboard(message.from_id))
             return
         if user.access_status == AccessStatus.PENDING:
             await message.answer("⏳ Ваша заявка уже находится на проверке.")
@@ -225,23 +230,23 @@ async def process_forecast(message: Message, url: str, attachment: str) -> None:
     try:
         recognized = await recognize_screenshot(url)
         answer = await make_forecast(recognized)
-        await message.answer(f"🎯 Прогноз готов!\n\n{answer}", keyboard=forecast_keyboard(is_admin(message.from_id)))
+        await message.answer(f"🎯 Прогноз готов!\n\n{answer}", keyboard=await build_forecast_keyboard(message.from_id))
     except RecognitionError as error:
         error_text = str(error)
-        await message.answer(f"❌ {error_text}", keyboard=forecast_keyboard(is_admin(message.from_id)))
+        await message.answer(f"❌ {error_text}", keyboard=await build_forecast_keyboard(message.from_id))
     except httpx.HTTPStatusError as error:
         error_text = f"Ошибка внешнего API: HTTP {error.response.status_code}"
         logger.exception("Ошибка API при обработке прогноза")
         await message.answer(
             "⚠️ Сервис аналитики сейчас перегружен. Пожалуйста, попробуйте чуть позже.",
-            keyboard=forecast_keyboard(is_admin(message.from_id)),
+            keyboard=await build_forecast_keyboard(message.from_id),
         )
     except Exception as error:
         error_text = str(error)
         logger.exception("Не удалось сформировать прогноз")
         await message.answer(
             "❌ К сожалению, мне не удалось прочитать этот скриншот. Попробуйте обрезать лишнее или отправить другой файл.",
-            keyboard=forecast_keyboard(is_admin(message.from_id)),
+            keyboard=await build_forecast_keyboard(message.from_id),
         )
     finally:
         async with session_scope() as session:
@@ -374,7 +379,7 @@ async def message_handler(message: Message) -> None:
 
     await message.answer(
         "👇 Чтобы нейросеть сделала прогноз, нажмите «ПОЛУЧИТЬ ПРОГНОЗ ⚽» и отправьте скриншот.",
-        keyboard=forecast_keyboard(is_admin(message.from_id)),
+        keyboard=await build_forecast_keyboard(message.from_id),
     )
 
 
@@ -470,7 +475,7 @@ async def callback_handler(event: GroupTypes.MessageEvent) -> None:
                 peer_id=applicant_id,
                 random_id=0,
                 message="🎉 Ваша регистрация подтверждена! Теперь вам доступен анализ событий.\nНажмите кнопку ниже, чтобы начать.",
-                keyboard=forecast_keyboard(is_admin(applicant_id)),
+                keyboard=await build_forecast_keyboard(applicant_id),
             )
         else:
             link = await get_setting("offer_link")

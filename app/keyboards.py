@@ -16,8 +16,11 @@ def registration_keyboard(link: str, is_admin: bool = False) -> str:
     return keyboard.get_json()
 
 
-def forecast_keyboard(is_admin: bool = False) -> str:
+def forecast_keyboard(offer_link: str = "", is_admin: bool = False) -> str:
     keyboard = Keyboard(inline=True)
+    if offer_link:
+        keyboard.add(OpenLink(offer_link, "Сделать ставку 💸"))
+        keyboard.row()
     keyboard.add(
         Text("ПОЛУЧИТЬ ПРОГНОЗ ⚽", payload={"action": "forecast"}),
         color=KeyboardButtonColor.POSITIVE,
